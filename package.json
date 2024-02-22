@@ -1,0 +1,40 @@
+{
+  "name": "ws-connector-console",
+  "productName": "ws-connector-console",
+  "version": "0.0.1",
+  "description": "WebSocket Connector Console",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package --platform=\"darwin,linux\" --arch=\"x64,arm64\"",
+    "make": "npm run make-mac && npm run make-linux",
+    "make-mac": "electron-forge make --platform=darwin --arch=\"x64,arm64\"",
+    "make-linux": "electron-forge make --platform=linux --arch=\"x64,arm64\"",
+    "publish": "npm run publish-mac && npm run publish-linux",
+    "publish-mac": "electron-forge publish --platform=darwin --arch=\"x64,arm64\"",
+    "publish-linux": "electron-forge publish --platform=linux --arch=\"x64,arm64\"",
+    "lint": "echo \"No linting configured\""
+  },
+  "keywords": [],
+  "author": {
+    "name": "Massimiliano Barbieri",
+    "email": "massimiliano.bar105@gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "jquery.terminal": "^2.39.0",
+    "winbox": "^0.2.82",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.2.0",
+    "@electron-forge/maker-deb": "^7.2.0",
+    "@electron-forge/maker-rpm": "^7.2.0",
+    "@electron-forge/maker-squirrel": "^7.2.0",
+    "@electron-forge/maker-zip": "^7.2.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.2.0",
+    "@electron-forge/publisher-github": "^7.2.0",
+    "appdmg": "^0.6.6",
+    "electron": "28.2.3"
+  }
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <link rel="stylesheet" href="../../node_modules/winbox/dist/css/winbox.min.css">
+    <link rel="stylesheet" href="../../node_modules/jquery.terminal/css/jquery.terminal.min.css">
+    <link rel="stylesheet" href="window.css" />
+  </head>
+  <body>
+    <div id="new-req-form">
+      <table>
+        <tbody>
+          <tr><td style="width:min-content;"><label for="new-req-method">Method / Topic:</label></td><td style="width:100%;"><input type="text" id="new-req-method" placeholder="method / topic"></td></tr>
+          <tr><td style="width:min-content;"><label for="new-req-data">Data:</label></td><td style="width:100%;"><textarea id="new-req-data" placeholder="data"></textarea></td></tr>
+          <tr>
+            <td></td>
+            <td>
+              <button id="new-req-btn">Request (with response)</button>
+              <button id="new-ff-req-btn">Fire&forget request</button>
+              <button id="new-sub-req-btn">Subscription request</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <script src="../../node_modules/winbox/dist/js/winbox.min.js"></script>
+    <script src="../../node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="../../node_modules/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <script src="window.js"></script>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: auto;
+  padding: 1rem;
+  background-color: #202020;
+}
+
+#new-req-form {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-top: solid 1px #999;
+}
+
+#new-req-form textarea {
+  resize: vertical;
+  min-height: 23px;
+}
+
+#new-req-form input, #new-req-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#new-req-form label {
+  color: #fff;
+  white-space: nowrap;
+  padding-right: 10px;
+}
+
+.wb-body.terminal {
+  height: calc(100% - 35px);
+}
