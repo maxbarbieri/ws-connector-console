@@ -127,17 +127,27 @@ function newTerminalForSentReq(title, id, method, isSub) {
 
 function sendMessage(type, id, method, msgString, last) {
   if (respChan !== "") {
+    let payloadObj;
+    try {
+      payloadObj = JSON.parse(msgString)
+
+    } catch (e) {
+      alert("Exception in JSON.parse(msgString): "+e.toString())
+    }
     let wrappedMsg = {
       type: type,
       id: id,
       method: method,
-      data: msgString
+      data: payloadObj
     };
     if (last) {
       wrappedMsg.last = true;
     }
     window.electronAPI.sendMessage(respChan, JSON.stringify(wrappedMsg));
+
+    return payloadObj;
   }
+  return null;
 }
 
 let lastSentReqId = 0;
@@ -149,43 +159,43 @@ let mapOngoingSentRequestIdToTerminal = new Map();
 
 window.electronAPI.onMessage((msg) => handleIncomingMessage(JSON.parse(msg)));
 
-function echoRaw(terminal, str) {
-  terminal.echo(str, { raw: true });
+function echoRaw(terminal, prompt, payload) {
+  terminal.echo(prompt+(!payload ? "" : JSON.stringify(payload)), { raw: true });
 }
 
 function handleIncomingMessage(msgObj) {
   if (msgObj.type === TYPE_REQUEST && msgObj.id !== 0) { //request with response
     let terminal = newTerminalForReceivedReq("Req #"+msgObj.id+" ("+msgObj.method+")", msgObj.id, msgObj.method, TYPE_RESPONSE, "respond");
-    echoRaw(terminal, "< "+msgObj.data);
+    echoRaw(terminal, "< ", msgObj.data);
 
   } else if (msgObj.type === TYPE_REQUEST && msgObj.id === 0) { //fire&forget request
     let terminal = newTerminalForReceivedReq("Fire&Forget Req ("+msgObj.method+")", msgObj.id, msgObj.method, -1, "");
-    echoRaw(terminal, "< "+msgObj.data);
+    echoRaw(terminal, "< ", msgObj.data);
 
   } else if (msgObj.type === TYPE_RESPONSE) { //response
     if (mapOngoingSentRequestIdToTerminal.has(msgObj.id)) { //if the original request terminal still exists
       let terminal = mapOngoingSentRequestIdToTerminal.get(msgObj.id);
-      echoRaw(terminal, "< "+msgObj.data);
+      echoRaw(terminal, "< ", msgObj.data);
       mapOngoingSentRequestIdToTerminal.delete(msgObj.id);
     }
 
   } else if (msgObj.type === TYPE_SUBSCRIPTION_REQUEST) { //subscription request
     if (mapOngoingReceivedSubscriptionIdToTerminal.has(msgObj.id)) { //subscription update
       let terminal = mapOngoingReceivedSubscriptionIdToTerminal.get(msgObj.id);
-      echoRaw(terminal, "< "+msgObj.data);
+      echoRaw(terminal, "< ", msgObj.data);
 
     } else { //new subscription
       let terminal = newTerminalForReceivedReq("Sub #"+msgObj.id+" ("+msgObj.method+")", msgObj.id, msgObj.method, TYPE_SUBSCRIPTION_DATA, "send");
-      echoRaw(terminal, "< "+msgObj.data);
+      echoRaw(terminal, "< ", msgObj.data);
       mapOngoingReceivedSubscriptionIdToTerminal.set(msgObj.id, terminal);
     }
 
   } else if (msgObj.type === TYPE_SUBSCRIPTION_DATA) { //subscription data
     if (mapOngoingSentSubscriptionIdToTerminal.has(msgObj.id)) { //if the subscription terminal still exists
       let terminal = mapOngoingSentSubscriptionIdToTerminal.get(msgObj.id);
-      echoRaw(terminal, "< "+msgObj.data);
+      echoRaw(terminal, "< ", msgObj.data);
       if (msgObj.last) {
-        echoRaw(terminal, "-- SUBSCRIPTION CLOSED --");
+        echoRaw(terminal, "-- SUBSCRIPTION CLOSED --", null);
         terminal.set_prompt("");
         terminal.freeze(true);
         mapOngoingSentSubscriptionIdToTerminal.delete(msgObj.id);
@@ -194,19 +204,26 @@ function handleIncomingMessage(msgObj) {
 
   } else if (msgObj.type === TYPE_UNSUBSCRIPTION_REQUEST) { //unsubscription request
     let terminal = mapOngoingReceivedSubscriptionIdToTerminal.get(msgObj.id);
-    echoRaw(terminal, "-- PEER HAS UNSUBSCRIBED --");
+    echoRaw(terminal, "-- PEER HAS UNSUBSCRIBED --", null);
     terminal.set_prompt("");
     terminal.freeze(true);
     mapOngoingReceivedSubscriptionIdToTerminal.delete(msgObj.id);
   }
 }
 
+let newReqBtn = document.getElementById("new-req-btn");
+let newFfReqBtn = document.getElementById("new-ff-req-btn");
+let newsubReqBtn = document.getElementById("new-sub-req-btn");
+
 window.electronAPI.onConnectionClosed(() => {
-  alert("Connection closed");
   respChan = "";
+  alert("Connection closed");
+  newReqBtn.disabled = true;
+  newFfReqBtn.disabled = true;
+  newsubReqBtn.disabled = true;
 });
 
-document.getElementById("new-req-btn").addEventListener("click", function() { //new sent request (with response)
+newReqBtn.addEventListener("click", function() { //new sent request (with response)
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
@@ -218,15 +235,15 @@ document.getElementById("new-req-btn").addEventListener("click", function() { //
   lastSentReqId++;
   let reqId = lastSentReqId;
 
-  sendMessage(TYPE_REQUEST, reqId, method, dataStr, false);
+  let payloadObj = sendMessage(TYPE_REQUEST, reqId, method, dataStr, false);
 
   let terminal = newTerminalForSentReq("Req #"+reqId+" ("+method+")", reqId, method, false);
-  echoRaw(terminal, "> "+dataStr);
+  echoRaw(terminal, "> ", payloadObj);
 
   mapOngoingSentRequestIdToTerminal.set(reqId, terminal);
 });
 
-document.getElementById("new-ff-req-btn").addEventListener("click", function() { //new sent fire&forget
+newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
@@ -235,13 +252,13 @@ document.getElementById("new-ff-req-btn").addEventListener("click", function() {
     return;
   }
 
-  sendMessage(TYPE_REQUEST, 0, method, dataStr, false);
+  let payloadObj = sendMessage(TYPE_REQUEST, 0, method, dataStr, false);
 
   let terminal = newTerminalForSentReq("Fire&Forget Req ("+method+")", 0, method, false);
-  echoRaw(terminal, "> "+dataStr);
+  echoRaw(terminal, "> ", payloadObj);
 });
 
-document.getElementById("new-sub-req-btn").addEventListener("click", function() { //new sent subscription request
+newsubReqBtn.addEventListener("click", function() { //new sent subscription request
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
@@ -253,10 +270,10 @@ document.getElementById("new-sub-req-btn").addEventListener("click", function() 
   lastSentSubId++;
   let subId = lastSentSubId;
 
-  sendMessage(TYPE_SUBSCRIPTION_REQUEST, subId, method, dataStr, false);
+  let payloadObj = sendMessage(TYPE_SUBSCRIPTION_REQUEST, subId, method, dataStr, false);
 
   let terminal = newTerminalForSentReq("Sub #"+subId+" ("+method+")", subId, method, true);
-  echoRaw(terminal, "sub-req> "+dataStr);
+  echoRaw(terminal, "sub-req> ", payloadObj);
 
   mapOngoingSentSubscriptionIdToTerminal.set(subId, terminal);
 });
