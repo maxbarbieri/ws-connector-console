@@ -27,10 +27,11 @@ function newTerminalForReceivedReq(title, id, method, sentMsgType, prompt) {
   w.removeControl("wb-full");
   let term = $(w.body).terminal(function (cmd) {
     if (cmd !== "" && prompt !== "") {
-      sendMessage(sentMsgType, id, method, cmd, sentMsgType !== TYPE_SUBSCRIPTION_DATA);
-      if (sentMsgType === TYPE_RESPONSE) { //disable terminal after the first response (if only one response is expected)
-        term.set_prompt("");
-        term.freeze(true);
+      if (!!sendMessage(sentMsgType, id, method, cmd, sentMsgType !== TYPE_SUBSCRIPTION_DATA)) {
+        if (sentMsgType === TYPE_RESPONSE) { //disable terminal after the first response (if only one response is expected)
+          term.set_prompt("");
+          term.freeze(true);
+        }
       }
     }
 
@@ -127,25 +128,27 @@ function newTerminalForSentReq(title, id, method, isSub) {
 
 function sendMessage(type, id, method, msgString, last) {
   if (respChan !== "") {
-    let payloadObj;
-    try {
-      payloadObj = JSON.parse(msgString)
-
-    } catch (e) {
-      alert("Exception in JSON.parse(msgString): "+e.toString())
-    }
     let wrappedMsg = {
       type: type,
       id: id,
-      method: method,
-      data: payloadObj
+      method: method
     };
+
+    try {
+      wrappedMsg.data = JSON.parse(msgString);
+
+    } catch (e) {
+      alert("Exception in JSON.parse(msgString): "+e.toString());
+      return null;
+    }
+
     if (last) {
       wrappedMsg.last = true;
     }
+
     window.electronAPI.sendMessage(respChan, JSON.stringify(wrappedMsg));
 
-    return payloadObj;
+    return wrappedMsg.data;
   }
   return null;
 }
@@ -217,10 +220,10 @@ let newsubReqBtn = document.getElementById("new-sub-req-btn");
 
 window.electronAPI.onConnectionClosed(() => {
   respChan = "";
-  alert("Connection closed");
   newReqBtn.disabled = true;
   newFfReqBtn.disabled = true;
   newsubReqBtn.disabled = true;
+  alert("Connection closed");
 });
 
 newReqBtn.addEventListener("click", function() { //new sent request (with response)
@@ -236,11 +239,11 @@ newReqBtn.addEventListener("click", function() { //new sent request (with respon
   let reqId = lastSentReqId;
 
   let payloadObj = sendMessage(TYPE_REQUEST, reqId, method, dataStr, false);
-
-  let terminal = newTerminalForSentReq("Req #"+reqId+" ("+method+")", reqId, method, false);
-  echoRaw(terminal, "> ", payloadObj);
-
-  mapOngoingSentRequestIdToTerminal.set(reqId, terminal);
+  if (!!payloadObj) {
+    let terminal = newTerminalForSentReq("Req #"+reqId+" ("+method+")", reqId, method, false);
+    echoRaw(terminal, "> ", payloadObj);
+    mapOngoingSentRequestIdToTerminal.set(reqId, terminal);
+  }
 });
 
 newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
@@ -253,9 +256,10 @@ newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
   }
 
   let payloadObj = sendMessage(TYPE_REQUEST, 0, method, dataStr, false);
-
-  let terminal = newTerminalForSentReq("Fire&Forget Req ("+method+")", 0, method, false);
-  echoRaw(terminal, "> ", payloadObj);
+  if (!!payloadObj) {
+    let terminal = newTerminalForSentReq("Fire&Forget Req (" + method + ")", 0, method, false);
+    echoRaw(terminal, "> ", payloadObj);
+  }
 });
 
 newsubReqBtn.addEventListener("click", function() { //new sent subscription request
@@ -271,9 +275,9 @@ newsubReqBtn.addEventListener("click", function() { //new sent subscription requ
   let subId = lastSentSubId;
 
   let payloadObj = sendMessage(TYPE_SUBSCRIPTION_REQUEST, subId, method, dataStr, false);
-
-  let terminal = newTerminalForSentReq("Sub #"+subId+" ("+method+")", subId, method, true);
-  echoRaw(terminal, "sub-req> ", payloadObj);
-
-  mapOngoingSentSubscriptionIdToTerminal.set(subId, terminal);
+  if (!!payloadObj) {
+    let terminal = newTerminalForSentReq("Sub #" + subId + " (" + method + ")", subId, method, true);
+    echoRaw(terminal, "sub-req> ", payloadObj);
+    mapOngoingSentSubscriptionIdToTerminal.set(subId, terminal);
+  }
 });
