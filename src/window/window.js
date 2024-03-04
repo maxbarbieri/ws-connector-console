@@ -16,10 +16,10 @@ function newTerminalForReceivedReq(title, id, method, sentMsgType, prompt) {
   if (id === 0) { //fire&forget request
     winBoxParams = { width: "300px", height: "150px", x: id*10+"px", y: id*10+"px" };
 
-  } else if (sentMsgType === TYPE_RESPONSE) { //request with response
+  } else if (sentMsgType === TYPE_RESPONSE) { //if we respond with a response, we have received a request with response
     winBoxParams = { width: "300px", height: "200px", x: id*10+"px", y: id*10+"px" };
 
-  } else if (sentMsgType === TYPE_SUBSCRIPTION_DATA) { //subscription request
+  } else if (sentMsgType === TYPE_SUBSCRIPTION_DATA) { //if we respond with subscription data, we have received a subscription request
     winBoxParams = { width: "300px", height: "400px", x: id*10+"px", y: id*10+"px" };
   }
 
@@ -46,6 +46,28 @@ function newTerminalForReceivedReq(title, id, method, sentMsgType, prompt) {
 
   if (prompt === "") {
     term.freeze(true);
+  }
+
+  if (sentMsgType === TYPE_SUBSCRIPTION_DATA) { //if we have received a subscription request
+    w.addControl({
+      index: 0,
+      class: "wb-close-subscription",
+      image: "assets/stop.svg",
+      click: function(event, wbox){
+        if (!term.frozen()) { //if the terminal is not frozen when the close subscription button is clicked
+          echoRaw(term, "-- SUBSCRIPTION CLOSED --", null);
+          term.set_prompt("");
+          term.freeze(true);
+
+          //remove the id from the subscriptions map
+          mapOngoingReceivedSubscriptionIdToTerminal.delete(id);
+
+          //send a message flagged as the last one to close the subscription
+          sendMessage(sentMsgType, id, method, null, true);
+          wbox.removeControl("wb-close-subscription");
+        }
+      }
+    });
   }
 
   w.onclose = function(){
@@ -146,10 +168,19 @@ function sendMessage(type, id, method, msgString, last) {
       wrappedMsg.last = true;
     }
 
+    if (type === TYPE_UNSUBSCRIPTION_REQUEST) {
+      let terminal = mapOngoingSentSubscriptionIdToTerminal.get(id);
+      echoRaw(terminal, "-- SUBSCRIPTION CLOSED --", null);
+      terminal.set_prompt("");
+      terminal.freeze(true);
+      mapOngoingSentSubscriptionIdToTerminal.delete(id);
+    }
+
     window.electronAPI.sendMessage(respChan, JSON.stringify(wrappedMsg));
 
     return wrappedMsg.data;
   }
+
   return null;
 }
 
@@ -197,11 +228,13 @@ function handleIncomingMessage(msgObj) {
     if (mapOngoingSentSubscriptionIdToTerminal.has(msgObj.id)) { //if the subscription terminal still exists
       let terminal = mapOngoingSentSubscriptionIdToTerminal.get(msgObj.id);
       echoRaw(terminal, "< ", msgObj.data);
-      if (msgObj.last) {
-        echoRaw(terminal, "-- SUBSCRIPTION CLOSED --", null);
-        terminal.set_prompt("");
-        terminal.freeze(true);
+      if (msgObj.last) { //if this is the subscription's last message
         mapOngoingSentSubscriptionIdToTerminal.delete(msgObj.id);
+        if (!terminal.frozen()) { //if the terminal is not already frozen
+          echoRaw(terminal, "-- SUBSCRIPTION CLOSED --", null);
+          terminal.set_prompt("");
+          terminal.freeze(true);
+        }
       }
     }
 
@@ -216,13 +249,13 @@ function handleIncomingMessage(msgObj) {
 
 let newReqBtn = document.getElementById("new-req-btn");
 let newFfReqBtn = document.getElementById("new-ff-req-btn");
-let newsubReqBtn = document.getElementById("new-sub-req-btn");
+let newSubReqBtn = document.getElementById("new-sub-req-btn");
 
 window.electronAPI.onConnectionClosed(() => {
   respChan = "";
   newReqBtn.disabled = true;
   newFfReqBtn.disabled = true;
-  newsubReqBtn.disabled = true;
+  newSubReqBtn.disabled = true;
   alert("Connection closed");
 });
 
@@ -262,7 +295,7 @@ newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
   }
 });
 
-newsubReqBtn.addEventListener("click", function() { //new sent subscription request
+newSubReqBtn.addEventListener("click", function() { //new sent subscription request
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
