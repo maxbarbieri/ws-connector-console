@@ -263,8 +263,8 @@ newReqBtn.addEventListener("click", function() { //new sent request (with respon
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
-  if (!method || !dataStr) {
-    alert("You must specify a method and a data string.");
+  if (!method) {
+    alert("You must specify a method.");
     return;
   }
 
@@ -283,8 +283,8 @@ newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
-  if (!method || !dataStr) {
-    alert("You must specify a method and a data string.");
+  if (!method) {
+    alert("You must specify a method.");
     return;
   }
 
@@ -299,8 +299,8 @@ newSubReqBtn.addEventListener("click", function() { //new sent subscription requ
   let method = document.getElementById("new-req-method").value;
   let dataStr = document.getElementById("new-req-data").value;
 
-  if (!method || !dataStr) {
-    alert("You must specify a method and a data string.");
+  if (!method) {
+    alert("You must specify a method.");
     return;
   }
 
