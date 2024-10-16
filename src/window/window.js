@@ -268,6 +268,10 @@ newReqBtn.addEventListener("click", function() { //new sent request (with respon
     return;
   }
 
+  if (!dataStr) {
+    dataStr = "null"
+  }
+
   lastSentReqId++;
   let reqId = lastSentReqId;
 
@@ -288,6 +292,10 @@ newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
     return;
   }
 
+  if (!dataStr) {
+    dataStr = "null"
+  }
+
   let payloadObj = sendMessage(TYPE_REQUEST, 0, method, dataStr, false);
   if (!!payloadObj) {
     let terminal = newTerminalForSentReq("Fire&Forget Req (" + method + ")", 0, method, false);
@@ -302,6 +310,10 @@ newSubReqBtn.addEventListener("click", function() { //new sent subscription requ
   if (!method) {
     alert("You must specify a method.");
     return;
+  }
+
+  if (!dataStr) {
+    dataStr = "null"
   }
 
   lastSentSubId++;
