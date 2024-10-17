@@ -276,11 +276,9 @@ newReqBtn.addEventListener("click", function() { //new sent request (with respon
   let reqId = lastSentReqId;
 
   let payloadObj = sendMessage(TYPE_REQUEST, reqId, method, dataStr, false);
-  if (!!payloadObj) {
-    let terminal = newTerminalForSentReq("Req #"+reqId+" ("+method+")", reqId, method, false);
-    echoRaw(terminal, "> ", payloadObj);
-    mapOngoingSentRequestIdToTerminal.set(reqId, terminal);
-  }
+  let terminal = newTerminalForSentReq("Req #"+reqId+" ("+method+")", reqId, method, false);
+  echoRaw(terminal, "> ", payloadObj);
+  mapOngoingSentRequestIdToTerminal.set(reqId, terminal);
 });
 
 newFfReqBtn.addEventListener("click", function() { //new sent fire&forget
@@ -320,9 +318,7 @@ newSubReqBtn.addEventListener("click", function() { //new sent subscription requ
   let subId = lastSentSubId;
 
   let payloadObj = sendMessage(TYPE_SUBSCRIPTION_REQUEST, subId, method, dataStr, false);
-  if (!!payloadObj) {
-    let terminal = newTerminalForSentReq("Sub #" + subId + " (" + method + ")", subId, method, true);
-    echoRaw(terminal, "sub-req> ", payloadObj);
-    mapOngoingSentSubscriptionIdToTerminal.set(subId, terminal);
-  }
+  let terminal = newTerminalForSentReq("Sub #" + subId + " (" + method + ")", subId, method, true);
+  echoRaw(terminal, "sub-req> ", payloadObj);
+  mapOngoingSentSubscriptionIdToTerminal.set(subId, terminal);
 });

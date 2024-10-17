@@ -1,7 +1,7 @@
 {
   "name": "ws-connector-console",
   "productName": "ws-connector-console",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "WebSocket Connector Console",
   "main": "src/index.js",
   "scripts": {
